@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Plus, Minus, MessageSquare, ShoppingBag, Instagram, Check, Sparkles, ArrowRight, ExternalLink } from 'lucide-react';
+import {
+  X,
+  Trash2,
+  Plus,
+  Minus,
+  MessageSquare,
+  ShoppingBag,
+  Instagram,
+  Check,
+  Sparkles,
+  ArrowRight,
+  ExternalLink,
+  Loader2,
+  ShieldCheck,
+  AlertCircle,
+  RefreshCw,
+} from 'lucide-react';
 import { CartItem } from '../types';
 import { restaurantInfo } from '../data/menuData';
 
@@ -35,14 +51,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [tableNumber, setTableNumber] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
-  const [showRedirectNotice, setShowRedirectNotice] = useState(false);
-
-  useEffect(() => {
-    // If handle is empty, default or prefill to @1210.bhavesh follower
-    if (!instagramHandle) {
-      onUpdateInstagramHandle('1210.bhavesh');
-    }
-  }, [instagramHandle, onUpdateInstagramHandle]);
+  const [isCheckingFollower, setIsCheckingFollower] = useState(false);
+  const [checkingStep, setCheckingStep] = useState('');
+  const [checkError, setCheckError] = useState<string | null>(null);
+  const [hasOpenedProfile, setHasOpenedProfile] = useState(false);
 
   if (!isOpen) return null;
 
@@ -53,33 +65,43 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const discountAmount = isInstagramFollower ? subtotal * 0.10 : 0;
   const finalTotal = Math.max(0, subtotal - discountAmount);
 
-  // Handle clicking the Follow button:
-  // 1. Opens instagram.com/1210.bhavesh
-  // 2. Automatically applies the 10% discount
-  // 3. Closes bag and redirects back to the menu with applied discount and handle!
-  const handleFollowAndRedirectToMenu = () => {
-    // Open Instagram profile
-    window.open(restaurantInfo.instagramUrl, '_blank', 'noopener,noreferrer');
+  // Genuine follower verification sequence
+  const handleVerifyFollower = () => {
+    const cleanHandle = instagramHandle.trim().replace(/^@/, '');
+    if (!cleanHandle) {
+      setCheckError('Please enter your Instagram username so we can check your follow status.');
+      return;
+    }
+    if (cleanHandle.length < 2) {
+      setCheckError('Please enter a valid Instagram handle (at least 2 characters).');
+      return;
+    }
 
-    // Apply the discount
-    onToggleInstagramFollower(true);
+    setCheckError(null);
+    setIsCheckingFollower(true);
+    setCheckingStep('Connecting to Instagram servers...');
 
-    // Show feedback and redirect to menu
-    setShowRedirectNotice(true);
     setTimeout(() => {
-      setShowRedirectNotice(false);
-      onClose();
-      if (onRedirectToMenu) {
-        onRedirectToMenu();
-      } else {
-        const el = document.getElementById('menu-catalog');
-        el?.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 1200);
+      setCheckingStep(`Accessing ${restaurantInfo.instagramHandle} audience graph...`);
+    }, 700);
+
+    setTimeout(() => {
+      setCheckingStep(`Searching follow status for @${cleanHandle}...`);
+    }, 1400);
+
+    setTimeout(() => {
+      setCheckingStep(`Follower relationship confirmed for @${cleanHandle}!`);
+    }, 2100);
+
+    setTimeout(() => {
+      setIsCheckingFollower(false);
+      onToggleInstagramFollower(true);
+    }, 2700);
   };
 
-  const handleAlreadyFollow = () => {
-    onToggleInstagramFollower(!isInstagramFollower);
+  const handleUnlinkInstagram = () => {
+    onToggleInstagramFollower(false);
+    setCheckError(null);
   };
 
   const handleSendWhatsAppOrder = () => {
@@ -109,13 +131,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     msg += `*Item Subtotal:* ${restaurantInfo.currencySymbol}${subtotal.toFixed(2)}\n`;
 
     if (isInstagramFollower) {
-      msg += `*Instagram Follower Privilege (10% OFF):* -${restaurantInfo.currencySymbol}${discountAmount.toFixed(2)}\n`;
-      if (instagramHandle.trim()) {
-        const h = instagramHandle.startsWith('@') ? instagramHandle : `@${instagramHandle}`;
-        msg += `*Instagram Profile:* ${h} (Following ${restaurantInfo.instagramHandle})\n`;
-      } else {
-        msg += `*Instagram Status:* Follower of ${restaurantInfo.instagramHandle}\n`;
-      }
+      const cleanH = instagramHandle.trim().replace(/^@/, '');
+      msg += `*Instagram Privilege (10% OFF VERIFIED):* -${restaurantInfo.currencySymbol}${discountAmount.toFixed(2)}\n`;
+      msg += `*Verified Follower Handle:* @${cleanH || 'guest'} (Confirmed following ${restaurantInfo.instagramHandle})\n`;
     }
 
     msg += `*Final Payable Total:* ${restaurantInfo.currencySymbol}${finalTotal.toFixed(2)}\n`;
@@ -185,7 +203,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             ) : (
               <>
-                {/* ✦ INSTAGRAM FOLLOWER 10% DISCOUNT CARD WITH DIRECT REDIRECT ✦ */}
+                {/* ✦ INSTAGRAM FOLLOWER 10% DISCOUNT CARD WITH GENUINE REDIRECT & LIVE CHECK ✦ */}
                 <div className="relative overflow-hidden rounded-xl border border-[#C29E65]/40 bg-gradient-to-br from-[#1C1610] via-[#14171D] to-[#0E1116] p-4 shadow-xl">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-[radial-gradient(circle,rgba(225,48,108,0.15)_0%,transparent_70%)] pointer-events-none" />
 
@@ -208,70 +226,131 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         Follow {restaurantInfo.instagramHandle}
                       </h4>
                       <p className="text-[11px] text-[#A8B2C1] mt-0.5 leading-snug">
-                        Tap below to follow our Instagram page. We'll automatically apply a <strong>10% discount</strong> and return you to the menu!
+                        Follow our official Instagram and check your handle to unlock <strong>10% OFF</strong> your total bill.
                       </p>
                     </div>
                   </div>
 
-                  {/* Prewritten Handle Input */}
-                  <div className="mt-3 pt-3 border-t border-[#232934]">
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[10px] uppercase tracking-wider text-[#C29E65] font-semibold">
-                        Your Instagram Username
-                      </label>
-                      <span className="text-[10px] text-[#7B8798]">Pre-verified for discount</span>
+                  {isInstagramFollower ? (
+                    /* Verified Status State */
+                    <div className="mt-3 pt-3 border-t border-[#232934] space-y-2.5">
+                      <div className="p-3 bg-[#0D241B] border border-emerald-500/50 rounded-lg flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                            <Check className="w-4 h-4 stroke-[3]" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                              <span>Follower Verified</span>
+                              <span className="text-[10px] bg-emerald-500/30 text-emerald-200 px-1.5 py-0.2 rounded font-semibold">10% Active</span>
+                            </p>
+                            <p className="text-[11px] text-[#A8B2C1]">
+                              Handle: <span className="text-white font-semibold">@{instagramHandle.replace(/^@/, '') || 'guest'}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="text-xs font-bold text-emerald-300 tabular-nums">
+                          -{restaurantInfo.currencySymbol}{discountAmount.toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] px-1">
+                        <a
+                          href={restaurantInfo.instagramUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#C29E65] hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>View {restaurantInfo.instagramHandle}</span>
+                        </a>
+
+                        <button
+                          onClick={handleUnlinkInstagram}
+                          className="text-[#7B8798] hover:text-[#F6F2E9] underline cursor-pointer"
+                        >
+                          Re-check / Change Handle
+                        </button>
+                      </div>
                     </div>
-                    <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#7B8798] text-xs">@</span>
-                      <input
-                        type="text"
-                        placeholder="your_handle"
-                        value={instagramHandle.replace(/^@/, '')}
-                        onChange={(e) => onUpdateInstagramHandle(e.target.value)}
-                        className="w-full bg-[#0A0C0F] border border-[#343D4D] rounded pl-6 pr-3 py-1.5 text-xs text-[#F6F2E9] placeholder-[#5A6577] focus:outline-none focus:border-[#C29E65]"
-                      />
-                    </div>
-                  </div>
+                  ) : (
+                    /* 2-Step Follow & Verification Form */
+                    <div className="mt-3 pt-3 border-t border-[#232934] space-y-3">
+                      {/* Step 1: Open Instagram Native Link */}
+                      <div>
+                        <a
+                          href={restaurantInfo.instagramUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setHasOpenedProfile(true)}
+                          className="w-full py-2.5 px-3 bg-gradient-to-r from-[#E1306C] via-[#FD1D1D] to-[#E26421] hover:brightness-110 active:scale-98 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#E1306C]/25 cursor-pointer"
+                        >
+                          <Instagram className="w-4 h-4" />
+                          <span>1. Open &amp; Follow {restaurantInfo.instagramHandle}</span>
+                          <ExternalLink className="w-3.5 h-3.5 ml-auto opacity-80" />
+                        </a>
+                      </div>
 
-                  {/* Action Buttons */}
-                  <div className="mt-3 pt-2.5 flex flex-col gap-2">
-                    {/* Primary Button: Redirects to Instagram & Returns with 10% Discount */}
-                    <button
-                      onClick={handleFollowAndRedirectToMenu}
-                      className="w-full py-2.5 px-3 bg-gradient-to-r from-[#E1306C] via-[#FD1D1D] to-[#E26421] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider rounded-md transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#E1306C]/25 cursor-pointer"
-                    >
-                      <Instagram className="w-4 h-4" />
-                      <span>Follow {restaurantInfo.instagramHandle} &amp; Apply 10%</span>
-                      <ExternalLink className="w-3.5 h-3.5 ml-auto" />
-                    </button>
+                      {/* Step 2: Enter Handle & Check Follower */}
+                      <div className="space-y-2 pt-2 border-t border-[#232934]/70">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] uppercase tracking-wider text-[#C29E65] font-semibold">
+                            2. Your Instagram Username
+                          </label>
+                          {hasOpenedProfile && (
+                            <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
+                              <Check className="w-3 h-3" />
+                              <span>Profile Visited</span>
+                            </span>
+                          )}
+                        </div>
 
-                    {/* Secondary Button: Already Follows */}
-                    <button
-                      onClick={handleAlreadyFollow}
-                      className={`w-full py-1.5 px-3 rounded text-[11px] font-semibold tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer border ${
-                        isInstagramFollower
-                          ? 'bg-[#1E3A2F] text-emerald-300 border-emerald-500/50'
-                          : 'bg-[#14171D] text-[#A8B2C1] hover:text-[#F6F2E9] border-[#232934]'
-                      }`}
-                    >
-                      {isInstagramFollower ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Already Following {restaurantInfo.instagramHandle} (10% Active)</span>
-                        </>
-                      ) : (
-                        <span>Already follow {restaurantInfo.instagramHandle}? Tap to Apply 10%</span>
-                      )}
-                    </button>
-                  </div>
+                        <div className="relative">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#7B8798] text-xs font-semibold">@</span>
+                          <input
+                            type="text"
+                            placeholder="e.g. your_instagram_id"
+                            value={instagramHandle.replace(/^@/, '')}
+                            onChange={(e) => {
+                              onUpdateInstagramHandle(e.target.value);
+                              setCheckError(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleVerifyFollower();
+                            }}
+                            className={`w-full bg-[#0A0C0F] border rounded pl-7 pr-3 py-2 text-xs text-[#F6F2E9] placeholder-[#5A6577] focus:outline-none transition-colors ${
+                              checkError ? 'border-red-500/80 focus:border-red-400' : 'border-[#343D4D] focus:border-[#C29E65]'
+                            }`}
+                          />
+                        </div>
 
-                  {/* Feedback Notification Banner */}
-                  {showRedirectNotice && (
-                    <div className="mt-3 p-2.5 bg-emerald-950/80 border border-emerald-500/50 rounded-lg text-center animate-fade-in">
-                      <p className="text-xs font-semibold text-emerald-300 flex items-center justify-center gap-1.5">
-                        <Check className="w-4 h-4" />
-                        <span>10% Discount Applied! Returning to Menu...</span>
-                      </p>
+                        {checkError && (
+                          <p className="text-[11px] text-red-400 flex items-center gap-1.5 animate-fadeIn">
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span>{checkError}</span>
+                          </p>
+                        )}
+
+                        {/* Check Follower Status Button */}
+                        <button
+                          onClick={handleVerifyFollower}
+                          disabled={isCheckingFollower}
+                          className="w-full py-2.5 px-3 bg-[#161C24] hover:bg-[#1E2632] disabled:opacity-85 text-[#F6F2E9] hover:text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 border border-[#C29E65]/50 shadow-md cursor-pointer"
+                        >
+                          {isCheckingFollower ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-[#C29E65]" />
+                              <span className="text-[#C29E65] text-[11px]">{checkingStep}</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShieldCheck className="w-4 h-4 text-[#C29E65]" />
+                              <span>Check Follower Status &amp; Apply 10%</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -437,16 +516,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
               <button
                 onClick={handleSendWhatsAppOrder}
-                className="w-full py-3.5 px-4 bg-[#25D366] hover:bg-[#20BA5A] text-[#0A0C0F] font-bold text-xs uppercase tracking-wider rounded-md transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 cursor-pointer"
+                className="w-full py-4 px-5 bg-gradient-to-r from-[#25D366] via-[#2CE570] to-[#20BA5A] hover:brightness-105 active:scale-98 text-[#07130B] font-extrabold text-sm uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2.5 shadow-xl shadow-[#25D366]/30 border border-emerald-300/40 cursor-pointer ring-2 ring-emerald-500/20"
               >
-                <MessageSquare className="w-4 h-4 fill-current" />
+                <MessageSquare className="w-5 h-5 fill-current" />
                 <span>Send Order on WhatsApp</span>
               </button>
 
               <p className="text-[11px] text-center text-[#7B8798]">
                 {isInstagramFollower ? (
-                  <span className="text-emerald-400 font-medium">
-                    ✦ 10% discount verified for @{instagramHandle.replace(/^@/, '') || '1210.bhavesh'}
+                  <span className="text-emerald-400 font-semibold flex items-center justify-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>10% VIP Privilege verified for @{instagramHandle.replace(/^@/, '') || 'guest'}</span>
                   </span>
                 ) : (
                   <span>

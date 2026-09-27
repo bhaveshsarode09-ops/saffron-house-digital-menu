@@ -37,9 +37,9 @@ export default function App() {
 
   const [instagramHandle, setInstagramHandle] = useState<string>(() => {
     try {
-      return localStorage.getItem('sh_insta_handle') || '1210.bhavesh';
+      return localStorage.getItem('sh_insta_handle') || '';
     } catch {
-      return '1210.bhavesh';
+      return '';
     }
   });
 

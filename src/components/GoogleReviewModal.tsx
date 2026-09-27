@@ -13,12 +13,6 @@ export const GoogleReviewModal: React.FC<GoogleReviewModalProps> = ({ isOpen, on
 
   if (!isOpen) return null;
 
-  const handleOpenGoogleReview = () => {
-    // Open Google Review / Maps URL
-    window.open(restaurantInfo.googleReviewUrl || restaurantInfo.googleMapsUrl, '_blank', 'noopener,noreferrer');
-    onClose();
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 animate-[fadeIn_0.2s_ease-out]">
       {/* Backdrop */}
@@ -90,13 +84,16 @@ export const GoogleReviewModal: React.FC<GoogleReviewModalProps> = ({ isOpen, on
 
         {/* Action Buttons */}
         <div className="space-y-2.5">
-          <button
-            onClick={handleOpenGoogleReview}
+          <a
+            href={restaurantInfo.googleReviewUrl || restaurantInfo.googleMapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onClose}
             className="w-full py-3.5 px-6 bg-[#C29E65] hover:bg-[#D8B781] text-[#0A0C0F] font-bold text-xs uppercase tracking-[0.2em] rounded-md transition-all flex items-center justify-center gap-2 shadow-xl shadow-[#C29E65]/20 cursor-pointer"
           >
             <span>Write a Google Review</span>
             <ExternalLink className="w-3.5 h-3.5" />
-          </button>
+          </a>
 
           <button
             onClick={onClose}

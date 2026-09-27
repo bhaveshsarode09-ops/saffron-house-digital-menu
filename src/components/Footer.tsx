@@ -49,6 +49,14 @@ export const Footer: React.FC<FooterProps> = ({ onSelectCategory }) => {
               Location & Hours
             </button>
             <a
+              href={restaurantInfo.googleReviewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#C29E65] hover:text-[#F6F2E9] transition-colors"
+            >
+              Write a Review
+            </a>
+            <a
               href={`https://wa.me/${restaurantInfo.whatsappNumber}`}
               target="_blank"
               rel="noopener noreferrer"

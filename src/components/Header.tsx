@@ -97,15 +97,17 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Zone 3: Primary interactive controls */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Google Review Shortcut Button */}
-            <button
-              onClick={onOpenReviewModal}
+            {/* Direct Google Review Trigger */}
+            <a
+              href={restaurantInfo.googleReviewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#C29E65] hover:text-[#F6F2E9] hover:bg-[#171B22] border border-[#C29E65]/30 rounded-md transition-colors whitespace-nowrap cursor-pointer"
-              title="Leave a Google Review"
+              title="Directly Write a Google Review"
             >
               <Star className="w-3.5 h-3.5 text-[#C29E65] fill-[#C29E65]" />
               <span className="text-[11px] uppercase tracking-wider">Review</span>
-            </button>
+            </a>
 
             {/* Search Trigger */}
             <button
@@ -125,18 +127,20 @@ export const Header: React.FC<HeaderProps> = ({
               <span>WhatsApp</span>
             </button>
 
-            {/* Cart Trigger */}
+            {/* Cart Trigger - Highlighted & Prominent */}
             <button
               onClick={onOpenCart}
-              className="relative flex items-center gap-2 px-3.5 py-1.5 bg-[#E26421] hover:bg-[#C75214] text-white text-xs font-semibold uppercase tracking-wider rounded-md transition-all shadow-lg shadow-[#E26421]/20 cursor-pointer"
+              className="relative flex items-center gap-2.5 px-4 py-2 bg-gradient-to-r from-[#E26421] via-[#F37A3B] to-[#E26421] hover:brightness-110 active:scale-95 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all shadow-lg shadow-[#E26421]/35 border border-[#FFA366]/40 cursor-pointer ring-2 ring-[#E26421]/20"
               aria-label={`View order bag with ${cartCount} items`}
             >
-              <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline">Order</span>
-              {cartCount > 0 && (
-                <span className="w-5 h-5 flex items-center justify-center bg-[#0A0C0F] text-[#E26421] text-[11px] font-bold rounded-full ml-0.5 tabular-nums">
+              <ShoppingBag className="w-4.5 h-4.5" />
+              <span>Order</span>
+              {cartCount > 0 ? (
+                <span className="min-w-5 h-5 px-1.5 flex items-center justify-center bg-white text-[#E26421] text-[11px] font-extrabold rounded-full tabular-nums shadow-md">
                   {cartCount}
                 </span>
+              ) : (
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               )}
             </button>
 
@@ -187,16 +191,17 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             <div className="pt-3 border-t border-[#1A1E26] flex items-center justify-between text-xs text-[#8A95A5]">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenReviewModal();
-                }}
-                className="flex items-center gap-1.5 text-[#C29E65] hover:text-[#F6F2E9]"
+              <a
+                href={restaurantInfo.googleReviewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-1.5 text-[#C29E65] hover:text-[#F6F2E9] cursor-pointer"
+                title="Directly Write a Google Review"
               >
                 <Star className="w-3.5 h-3.5 fill-[#C29E65]" />
                 <span>Write Google Review</span>
-              </button>
+              </a>
 
               <button
                 onClick={handleWhatsAppDirect}
@@ -231,24 +236,36 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Search</span>
         </button>
 
-        <button
-          onClick={onOpenReviewModal}
+        <a
+          href={restaurantInfo.googleReviewUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex flex-col items-center gap-1 text-[11px] text-[#C29E65] hover:text-white cursor-pointer"
+          title="Directly Write a Google Review"
         >
           <Star className="w-4 h-4 fill-[#C29E65]" />
           <span>Review</span>
-        </button>
+        </a>
 
+        {/* Highlighted Primary Order Action Button */}
         <button
           onClick={onOpenCart}
-          className="relative flex items-center gap-2 px-3.5 py-1.5 bg-[#E26421] text-white text-xs font-semibold rounded-md shadow-md cursor-pointer"
+          className="relative flex items-center gap-2.5 px-5 py-2.5 bg-gradient-to-r from-[#E26421] via-[#F37A3B] to-[#E26421] hover:brightness-110 active:scale-95 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-[0_4px_20px_rgba(226,100,33,0.45)] border border-[#FFA16C]/50 transition-all cursor-pointer ring-2 ring-[#E26421]/30"
+          aria-label={`View order bag with ${cartCount} items`}
         >
-          <ShoppingBag className="w-4 h-4" />
-          <span>Order</span>
-          {cartCount > 0 && (
-            <span className="w-4 h-4 bg-[#0A0C0F] text-[#E26421] text-[10px] font-bold rounded-full flex items-center justify-center tabular-nums">
+          <div className="relative">
+            <ShoppingBag className="w-4.5 h-4.5" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white animate-ping" />
+            )}
+          </div>
+          <span className="font-extrabold tracking-wide text-sm">Order</span>
+          {cartCount > 0 ? (
+            <span className="min-w-5 h-5 px-1.5 bg-[#0A0C0F] text-[#FFA16C] border border-[#FFA16C]/60 text-[11px] font-black rounded-full flex items-center justify-center tabular-nums shadow-inner">
               {cartCount}
             </span>
+          ) : (
+            <span className="text-[10px] text-white/90 bg-white/20 px-1.5 py-0.5 rounded font-medium">Bag</span>
           )}
         </button>
       </div>
